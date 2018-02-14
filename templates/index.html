@@ -11,7 +11,7 @@
 
 <body>
   <p>WASSUP MOTHERFUCKERS</p>
-  <div id="plot"></div>
+  <select id="selDataset" onchange="optionChanged(this.value)"></select>
   <div id="metadata_list">
     <ul>
       <li id="age">Age: </li>
@@ -23,7 +23,7 @@
     </ul>
   </div>
   <div id="pie"></div>
-  <select id="selDataset" onchange="optionChanged(this.value)"></select>
+  <div id="plot"></div>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>

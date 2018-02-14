@@ -29,7 +29,7 @@ Initialize with default sampleID = BB_940
 */
 
 function getPieChartData(data) {
-    
+    console.log(data.samples)
     if (data.samples.length>10) {
         endListRange=9
         }
@@ -39,7 +39,7 @@ function getPieChartData(data) {
     top10OTUIDs=[]
     for (i = 0; i < endListRange; i++) {
         top10Samples.push(+data.samples[i])
-        top10OTUIDs.push(+data.otu_ids[i])
+        top10OTUIDs.push(+data.otu_id[i])
     }
 
     
@@ -80,9 +80,9 @@ function updatePieChart(newdata) {
         
         var trace=getPieChartData(data)
 
-        console.log(trace)
-        console.log(trace[0].labels)
-        console.log(trace[0].values)
+        //console.log(trace)
+        //console.log(trace[0].labels)
+        //console.log(trace[0].values)
         Plotly.restyle(PIE, "labels", [trace[0].labels]);
         Plotly.restyle(PIE, "values", [trace[0].values]);
     })
@@ -90,20 +90,31 @@ function updatePieChart(newdata) {
 
 
 
-/*this is triggered when an option is selected from the dropdown*/
-function optionChanged(sampleID) {
-  
-    //console.log(sampleID)
+  function updateBubbleChart(newdata) {
+    url='/samples/'+newdata;
+    Plotly.d3.json(url, function(error, data){
+        if (error) return console.warn(error);
 
-    /*print the metadata to the console*/
-    //url="/metadata/"+sampleID
+        console.log("UPDATING BUBBLE CHART")
+        console.log(data)
+        var PLOT = document.getElementById('plot');
+        
+        var trace = {
+            x: data.otu_id,
+            y: data.samples
+            };
+        
+        console.log(trace.x)
+        var data = [trace];
 
-    //buildPie(sampleID)
-    
-    updatePieChart(sampleID)
-    getMetadata(sampleID)
-
-    }
+        //console.log(trace)
+        //console.log(trace[0].labels)
+        //console.log(trace[0].values)
+        Plotly.restyle(PLOT, "x", [trace.x]);
+        Plotly.restyle(PLOT, "y", [trace.y]);
+        Plotly.restyle(PLOT, "marker.color", [trace.x]);
+    })
+  }
 
 
 
@@ -123,6 +134,7 @@ function optionChanged(sampleID) {
             }
 
             var Metadata=document.getElementById('metadata')
+            var Age=document.getElementById('age')
             var BBType=document.getElementById('bbtype')
             var Ethnicity=document.getElementById('ethnicity')
             var Gender=document.getElementById('gender')
@@ -143,38 +155,51 @@ function optionChanged(sampleID) {
 
 
 
-/*
-function buildPlot() {
+/*this is triggered when an option is selected from the dropdown*/
+function optionChanged(sampleID) {
+  
+    //console.log(sampleID)
+
+    /*print the metadata to the console*/
+    //url="/metadata/"+sampleID
+
+    //buildPie(sampleID)
+    
+    updatePieChart(sampleID)
+    updateBubbleChart(sampleID)
+    getMetadata(sampleID)
+
+    }
+
+
+function buildPlot(sampleID) {
+    url = '/samples/'+sampleID
     Plotly.d3.json(url, function(error, response) {
 
-        console.log(response);
+        console.log(response.samples);
         var trace1 = {
-            type: "scatter",
-            mode: "lines",
-            name: "Bigfoot Sightings",
-            x: response.map(data => data.months),
-            y: response.map(data => data.sightings),
-            line: {
-                color: "#17BECF"
+            x: response.otu_id,
+            y: response.samples,
+            mode: 'markers',
+            marker: {
+                size: response.samples,
+                colorscale: 'Rainbow',
+                color: response.otu_id,
+                text: "sup"
             }
         };
 
         var data = [trace1];
-
+      
         var layout = {
-            title: "Bigfoot Sightings Per Year",
-            xaxis: {
-                type: "date"
-            },
-            yaxis: {
-                autorange: true,
-                type: "linear"
-            }
-        };
-
-        Plotly.newPlot("plot", data, layout);
+            title: "Bubble Size", 
+            height: 600,
+            width: 1000
+            };
+        
+        var PLOT = document.getElementById('plot');
+        Plotly.newPlot(PLOT, data, layout);
     });
 }
 
-buildPlot();
-*/
+buildPlot('BB_940');

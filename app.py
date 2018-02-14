@@ -86,27 +86,67 @@ def samples(sample):
         otu_ids.append(str(data['otu_id'].iloc[i]))
         samples.append(str(data['samples'].iloc[i]))
     newdict={
-        "otu_ids":otu_ids,
+        "otu_id":otu_ids,
         "samples":samples
     }
+
     return(jsonify(newdict))
 
-
 '''
-@app.route("/api/v1.0/<start>")
-def temps(start):
+NEW VERSION THAT ALSO RETURNS DESCRIPTIONS. ITS JANKY THO
 
-    start_dateobject=datetime.datetime.strptime(start, '%Y-%m-%d')
-    start_newdate_object=datetime.datetime.date(start_dateobject-datetime.timedelta(days=365))
+@app.route("/samples/<sample>")
+def samples(sample):
+    samples_query = session.query(Samples)
+    all_samples = pd.read_sql(samples_query.statement, samples_query.session.bind)
+    data=all_samples[['otu_id',sample]]
+    data=data.loc[data[sample]>0]
+    data.columns=['otu_id','samples']
+    data=data.sort_values('samples',ascending=False)
+    otu_ids=[]
+    samples=[]
+    for i in range(0,len(data)):
+        otu_ids.append(str(data['otu_id'].iloc[i]))
+        samples.append(str(data['samples'].iloc[i]))
+    dict1={
+        "otu_id":otu_ids,
+        "samples":samples
+    }
 
-    temp_query = session.query(Measurements).filter(Measurements.date>=start_newdate_object).with_entities(Measurements.date, Measurements.tobs)
-    df = pd.read_sql(temp_query.statement, temp_query.session.bind)
-    TMIN=df['tobs'].min()
-    TMAX=df['tobs'].max()
-    TAVG=df['tobs'].mean()
-    results=pd.DataFrame([TMIN,TMAX,TAVG])
-    return jsonify(results.to_dict())
-'''
+    otu_query = session.query(OTU)
+    otu = pd.read_sql(otu_query.statement, otu_query.session.bind)
+    otu_ids2=[]
+    descriptions=[]
+    for i in range(0,len(data)):
+        otu_ids2.append(str(otu.otu_id.iloc[i]))
+        descriptions.append(str(otu.lowest_taxonomic_unit_found.iloc[i]))
+
+    dict2={
+        "otu_id":otu_ids2,
+        "description":descriptions
+    }
+
+    df1=pd.DataFrame.from_dict(dict1)
+    df2=pd.DataFrame.from_dict(dict2)
+    merged=pd.merge(df1,df2,how='inner',on='otu_id')
+
+
+    otu_ids_final=[]
+    samples_final=[]
+    descriptions_final=[]
+    for i in range(0,len(merged)):
+            otu_ids_final.append(merged.otu_id.iloc[i])
+            samples_final.append(merged.samples.iloc[i])
+            descriptions_final.append(merged.description.iloc[i])
+
+    dictfinal={
+        "otu_id":otu_ids_final,
+        "samples":samples_final,
+        "description":descriptions_final
+    }
+
+    return(jsonify(dictfinal))
+    '''
 
 if __name__ == "__main__":
     app.run(debug=True)
